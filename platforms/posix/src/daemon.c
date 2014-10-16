@@ -94,6 +94,7 @@
 #ifndef BTSTACK_LOG_FILE
 #define BTSTACK_LOG_FILE "/tmp/hci_dump.pklg"
 #endif
+#define DEFAULT_LOG_LEVEL HCI_DUMP_LEVEL_ERROR
 
 // use logger: format HCI_DUMP_PACKETLOGGER, HCI_DUMP_BLUEZ or HCI_DUMP_STDOUT
 #ifndef BTSTACK_LOG_TYPE
@@ -1523,7 +1524,9 @@ static void usage(const char * name) {
     printf("usage: %s [--help] [--tcp port]\n", name);
     printf("    --help   display this usage\n");
     printf("    --tcp    use TCP server on port %u\n", BTSTACK_PORT);
-    printf("Without the --tcp option, BTstack daemon is listening on unix domain socket %s\n\n", BTSTACK_UNIX);
+    printf("               Without the --tcp option, BTstack daemon is listening on unix domain socket %s\n", BTSTACK_UNIX);
+    printf("    -v n     set verbosity to n, from 0 (no output) to 4 (all packet data). Defaults to %d\n", DEFAULT_LOG_LEVEL);
+    printf("\n");
 }
 
 #ifdef USE_BLUETOOL 
@@ -1645,6 +1648,7 @@ static void handle_gatt_client_event(le_event_t * le_event){
 int main (int argc,  char * const * argv){
     
     static int tcp_flag = 0;
+    hci_dump_level_t log_level = DEFAULT_LOG_LEVEL;
     
     while (1) {
         static struct option long_options[] = {
@@ -1656,7 +1660,7 @@ int main (int argc,  char * const * argv){
         int c;
         int option_index = -1;
         
-        c = getopt_long(argc, argv, "h", long_options, &option_index);
+        c = getopt_long(argc, argv, "hv:", long_options, &option_index);
         
         if (c == -1) break; // no more option
         
@@ -1667,6 +1671,9 @@ int main (int argc,  char * const * argv){
                 case 'h':
                     usage(argv[0]);
                     return 0;
+                    break;
+                case 'v':
+                    log_level = atoi(optarg);
                     break;
             }
         } else {
@@ -1757,6 +1764,7 @@ int main (int argc,  char * const * argv){
     // iPhone has toggle in Preferences.app
     newLoggingEnabled = platform_iphone_logging_enabled();
 #endif
+    hci_dump_set_level(log_level);
     daemon_set_logging_enabled(newLoggingEnabled);
     
     // dump version
