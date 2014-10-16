@@ -57,11 +57,20 @@ typedef enum {
     HCI_DUMP_STDOUT
 } hci_dump_format_t;
 
+typedef enum {
+    HCI_DUMP_LEVEL_NONE = 0,
+    HCI_DUMP_LEVEL_ERROR,
+    HCI_DUMP_LEVEL_INFO,
+    HCI_DUMP_LEVEL_DEBUG,
+    HCI_DUMP_LEVEL_PACKET
+} hci_dump_level_t;
+
 void hci_dump_open(const char *filename, hci_dump_format_t format);
 void hci_dump_set_max_packets(int packets); // -1 for unlimited
 void hci_dump_packet(uint8_t packet_type, uint8_t in, uint8_t *packet, uint16_t len);
-void hci_dump_log(const char * format, ...);
+void hci_dump_log(hci_dump_level_t level, const char * format, ...);
 void hci_dump_close(void);
+void hci_dump_set_level(hci_dump_level_t level);
 
 #if defined __cplusplus
 }

@@ -99,7 +99,14 @@ static char time_string[40];
 static int  max_nr_packets = -1;
 static int  nr_packets = 0;
 static char log_message_buffer[256];
+static hci_dump_level_t dump_level = HCI_DUMP_LEVEL_PACKET;
 #endif
+
+void hci_dump_set_level(hci_dump_level_t level) {
+#ifndef EMBEDDED
+    dump_level = level;
+#endif
+}
 
 void hci_dump_open(const char *filename, hci_dump_format_t format){
 #ifndef EMBEDDED
@@ -122,6 +129,10 @@ void hci_dump_packet(uint8_t packet_type, uint8_t in, uint8_t *packet, uint16_t 
 #ifndef EMBEDDED
 
     if (dump_file < 0) return; // not activated yet
+
+    if (packet_type != LOG_MESSAGE_PACKET &&
+        dump_level < HCI_DUMP_LEVEL_PACKET)
+        return;
 
     // don't grow bigger than max_nr_packets
     if (dump_format != HCI_DUMP_STDOUT && max_nr_packets > 0){
@@ -220,8 +231,10 @@ void hci_dump_packet(uint8_t packet_type, uint8_t in, uint8_t *packet, uint16_t 
 #endif
 }
 
-void hci_dump_log(const char * format, ...){
+void hci_dump_log(hci_dump_level_t level, const char * format, ...){
 #ifndef EMBEDDED
+    if (level > dump_level) return;
+
     va_list argptr;
     va_start(argptr, format);
     int len = vsnprintf(log_message_buffer, sizeof(log_message_buffer), format, argptr);
