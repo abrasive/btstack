@@ -1080,6 +1080,8 @@ static int daemon_client_handler(connection_t *connection, uint16_t packet_type,
         case HCI_COMMAND_DATA_PACKET:
             if (READ_CMD_OGF(data) != OGF_BTSTACK) { 
                 // HCI Command
+                if (!hci_can_send_command_packet_now())
+                    return BTSTACK_BUSY;    // HACK: park the connection
                 hci_send_cmd_packet(data, length);
             } else {
                 // BTstack command
@@ -1292,6 +1294,9 @@ static void daemon_packet_handler(void * connection, uint8_t packet_type, uint16
                     return;
                 case RFCOMM_EVENT_CREDITS:
                     // RFCOMM CREDITS received...
+                    daemon_retry_parked();
+                    break;
+                case HCI_EVENT_COMMAND_COMPLETE:
                     daemon_retry_parked();
                     break;
                  case RFCOMM_EVENT_OPEN_CHANNEL_COMPLETE:
